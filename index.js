@@ -27,8 +27,25 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    const equipmentCollection = client
+      .db("equipmentDB")
+      .collection("equipment");
+
+    //View All The Data Stored In the Database
+    app.get("/equipment", async (req, res) => {
+      const cursor = equipmentCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    //Create New Equipment and Store In The Database Request
+    app.post("/equipment", async (req, res) => {
+      const newEquipment = req.body;
+      console.log(newEquipment);
+      const result = await equipmentCollection.insertOne(newEquipment);
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
