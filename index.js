@@ -1,22 +1,28 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
+// Add ObjectId validation middleware
+const validateObjectId = (req, res, next) => {
+  const id = req.params.id;
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid equipment ID format" });
+  }
+  next();
+};
+
 app.get("/", (req, res) => {
   res.send("Sports Website Loading");
 });
-const username = process.env.DB_USER;
-const pass = process.env.DB_PASS;
 
-const uri = `mongodb+srv://${username}:${pass}@cluster0.8g3c7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8g3c7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -28,38 +34,58 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-
     const equipmentCollection = client
       .db("equipmentDB")
       .collection("equipment");
 
-    //View All The Data Stored In the Database
+    // Get all equipment
     app.get("/equipment", async (req, res) => {
-      const cursor = equipmentCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
+      try {
+        const cursor = equipmentCollection.find();
+        const result = await cursor.toArray();
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
     });
-    //Create New Equipment and Store In The Database Request
+
+    // Get single equipment with validation
+    app.get("/equipment/:id", validateObjectId, async (req, res) => {
+      try {
+        const id = req.params.id;
+        const result = await equipmentCollection.findOne({
+          _id: new ObjectId(id),
+        });
+
+        if (!result) {
+          return res.status(404).json({ error: "Equipment not found" });
+        }
+
+        res.json(result);
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+
+    // Create new equipment
     app.post("/equipment", async (req, res) => {
-      const newEquipment = req.body;
-      console.log(newEquipment);
-      const result = await equipmentCollection.insertOne(newEquipment);
-      res.send(result);
+      try {
+        const newEquipment = req.body;
+        const result = await equipmentCollection.insertOne(newEquipment);
+        res.status(201).json(result);
+      } catch (error) {
+        res.status(500).json({ error: "Could not create equipment" });
+      }
     });
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+
+    console.log("Connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+    // Keep connection open
   }
 }
+
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log(`Sports Website Server is running `);
+  console.log(`Server running on port ${port}`);
 });
-//
-//
