@@ -66,33 +66,39 @@ async function run() {
       }
     });
 
-    // app.get("/my-equipment", async (req, res) => {
-    //   try {
-    //     // Get user email from the authenticated user
-    //     const userEmail = req.user.email; // You'll need to implement authentication middleware
-    //     const query = { userEmail: userEmail };
-    //     const result = await equipmentCollection.find(query).toArray();
-    //     res.json(result);
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Server error" });
-    //   }
-    // });
+    //Update
+    app.put("/equipment/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedEquipment = req.body;
+      const Equipment = {
+        $set: {
+          imageURL: updatedEquipment.imageURL,
+          productName: updatedEquipment.productName,
+          categoryName: updatedEquipment.categoryName,
+          description: updatedEquipment.description,
+          customDetails: updatedEquipment.customDetails,
+          price: updatedEquipment.price,
+          rating: updatedEquipment.rating,
+          deliveryTime: updatedEquipment.deliveryTime,
+          availability: updatedEquipment.availability,
+        },
+      };
+      const result = await equipmentCollection.updateOne(
+        query,
+        Equipment,
+        options
+      );
+      res.send(result);
+    });
 
     // Create new equipment
     app.post("/equipment", async (req, res) => {
-      try {
-        // Add user email to the equipment data
-        const newEquipment = {
-          ...req.body,
-          userEmail: req.user.email, // You'll need authentication middleware
-          createdAt: new Date(),
-        };
+      const newEquipment = req.body;
 
-        const result = await equipmentCollection.insertOne(newEquipment);
-        res.status(201).json(result);
-      } catch (error) {
-        res.status(500).json({ error: "Could not create equipment" });
-      }
+      const result = await equipmentCollection.insertOne(newEquipment);
+      res.status(201).json(result);
     });
 
     console.log("Connected to MongoDB!");
