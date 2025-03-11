@@ -8,7 +8,6 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Add ObjectId validation middleware
 const validateObjectId = (req, res, next) => {
   const id = req.params.id;
   if (!ObjectId.isValid(id)) {
@@ -49,7 +48,7 @@ async function run() {
       }
     });
 
-    // Get single equipment with validation
+    // Get single equipment
     app.get("/equipment/:id", validateObjectId, async (req, res) => {
       try {
         const id = req.params.id;
@@ -67,10 +66,28 @@ async function run() {
       }
     });
 
+    // app.get("/my-equipment", async (req, res) => {
+    //   try {
+    //     // Get user email from the authenticated user
+    //     const userEmail = req.user.email; // You'll need to implement authentication middleware
+    //     const query = { userEmail: userEmail };
+    //     const result = await equipmentCollection.find(query).toArray();
+    //     res.json(result);
+    //   } catch (error) {
+    //     res.status(500).json({ error: "Server error" });
+    //   }
+    // });
+
     // Create new equipment
     app.post("/equipment", async (req, res) => {
       try {
-        const newEquipment = req.body;
+        // Add user email to the equipment data
+        const newEquipment = {
+          ...req.body,
+          userEmail: req.user.email, // You'll need authentication middleware
+          createdAt: new Date(),
+        };
+
         const result = await equipmentCollection.insertOne(newEquipment);
         res.status(201).json(result);
       } catch (error) {
