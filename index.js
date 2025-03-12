@@ -105,7 +105,7 @@ async function run() {
       const newEquipment = req.body;
 
       const result = await equipmentCollection.insertOne(newEquipment);
-      res.status(201).json(result);
+      res.send(result);
     });
 
     console.log("Connected to MongoDB!");
