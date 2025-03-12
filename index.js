@@ -100,7 +100,7 @@ async function run() {
       res.send(result);
     });
 
-    // Create new equipment
+    // Create new equipment In The website
     app.post("/equipment", async (req, res) => {
       const newEquipment = req.body;
 
@@ -110,7 +110,7 @@ async function run() {
 
     console.log("Connected to MongoDB!");
   } finally {
-    // Keep connection open
+    // Keep connection Open
   }
 }
 
